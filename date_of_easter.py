@@ -22,12 +22,9 @@ def zfill(characters, total_length, leading_char=0):
     """
     characters = str(characters)
     leading_char_length = total_length - len(characters) # Nombre de caractère à ajouter à gauche
-    result = ''
 
-    for i in range(leading_char_length):
-        result += str(leading_char)
+    return str(leading_char) * leading_char_length + characters
 
-    return result + characters
     
 
 def format_date(day, month, year):
@@ -47,32 +44,35 @@ def find_date_of_easter(year):
     """
     
     # Golden year
-    g = year % 19 
+    golden_year = year % 19 
 
     # Siècle
-    c = year // 100 
+    century = year // 100 
 
-    # Calculs intermédiaires (évite les répétitions)
-    d = c - c // 4
-    e = (8 * c + 13) // 25
-    h = (d - e + 19 * g + 15) % 30
-    k = h // 28
-    p = 29 // (h + 1)
-    q = (21 - g) // 11
+    # Différence entre le calendrier julien et le calendrier grégorien
+    solar_equation = century - century // 4
+
+    # Différence entre le calendrier julien et le cycle métonique
+    lunar_equation = (8 * century + 13) // 25
+
+    # Age de la lune au 22 mars
+    epact = (solar_equation - lunar_equation + 19 * golden_year + 15) % 30
+
+    lunar_date = epact // 28
 
     # Nombre de jour entre le 21 mars et la Lune écclésiastique
-    i = h - k * (1 - k * p * q)
+    paschal_moon_offset = epact - lunar_date * (1 - lunar_date * (29 // (epact + 1)) * ((21 - golden_year) // 11))
 
     # Jour de la semaine de la Lune écclésiastique (dimanche=0 ... samedi=6)
-    j = (year + year // 4 + i + 2 - d) % 7
+    paschal_moon_day = (year + year // 4 + paschal_moon_offset + 2 - solar_equation) % 7
 
     # Date de Paques au mois de mars (du 22 mars au 23 mai)
-    r = 28 + i - j
+    date = 28 + paschal_moon_offset - paschal_moon_day
     
-    if r <= 31:
-        return format_date(r, 3, year)
+    if date <= 31:
+        return format_date(date, 3, year)
     
-    return format_date(r-31, 4, year)
+    return format_date(date-31, 4, year)
 
 def test_find_date_of_easter():
     assert find_date_of_easter(1583) == '10-04-1583'
